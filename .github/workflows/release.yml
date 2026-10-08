@@ -1,0 +1,47 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Stamp version from tag
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" Resources/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $GITHUB_RUN_NUMBER" Resources/Info.plist
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Build universal DMG
+        env:
+          UNIVERSAL: "1"
+        run: scripts/make-dmg.sh
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          DMG="build/AppVolume-$VERSION.dmg"
+          SHA=$(shasum -a 256 "$DMG" | cut -d' ' -f1)
+          cat > notes.md <<NOTES
+          Per-app volume mixer for macOS 15+, universal (Apple Silicon and Intel).
+
+          ### Install
+          1. Open \`AppVolume-$VERSION.dmg\` and drag **AppVolume** into **Applications**.
+          2. Open AppVolume. macOS blocks it the first time because it isn't notarized by Apple.
+             Go to **System Settings › Privacy & Security**, scroll down and click **Open Anyway**.
+             (Or run \`xattr -dr com.apple.quarantine /Applications/AppVolume.app\` once.)
+          3. Click the mixer icon in the menu bar. The first time you change an app's volume, allow
+             **System Audio Recording** when asked.
+
+          SHA-256: \`$SHA\`
+          NOTES
+          gh release create "$GITHUB_REF_NAME" "$DMG" --title "AppVolume $VERSION" --notes-file notes.md

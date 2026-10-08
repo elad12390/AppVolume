@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build universal app and DMG
+        env:
+          UNIVERSAL: "1"
+        run: scripts/make-dmg.sh
+
+      - name: Verify bundle
+        run: |
+          lipo -archs build/AppVolume.app/Contents/MacOS/AppVolume | grep -q x86_64
+          lipo -archs build/AppVolume.app/Contents/MacOS/AppVolume | grep -q arm64
+          codesign --verify --strict build/AppVolume.app
+          plutil -lint build/AppVolume.app/Contents/Info.plist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AppVolume-dmg
+          path: build/*.dmg
+          retention-days: 14
