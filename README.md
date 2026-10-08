@@ -1,5 +1,9 @@
 # AppVolume
 
+[![CI](https://github.com/elad12390/AppVolume/actions/workflows/ci.yml/badge.svg)](https://github.com/elad12390/AppVolume/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/elad12390/AppVolume)](https://github.com/elad12390/AppVolume/releases/latest)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
 **A Windows-style volume mixer for macOS.** Set the volume of every app separately, right from the menu bar. No audio drivers, no virtual devices.
 
 <p align="center">
@@ -36,39 +40,45 @@ Bring the slider back to 100% and the tap and aggregate device are destroyed, so
 
 Nothing is installed system-wide: there is no kernel extension, HAL plug-in or virtual sound card.
 
-## Requirements
-
-- macOS 15 Sequoia or later
-- Xcode or the Command Line Tools (`xcode-select --install`) to build
-
 ## Install
+
+1. Download the latest **AppVolume-x.y.z.dmg** from [Releases](https://github.com/elad12390/AppVolume/releases/latest). It runs on macOS 15 Sequoia or later, on Apple Silicon and Intel.
+2. Open the DMG and drag **AppVolume** into **Applications**.
+3. Open AppVolume. The first time, macOS blocks it: the app is signed but not notarized, since that needs a paid Apple Developer account. Go to **System Settings › Privacy & Security**, scroll down and click **Open Anyway**. Or run this once:
+
+   ```sh
+   xattr -dr com.apple.quarantine /Applications/AppVolume.app
+   ```
+
+4. Click the mixer icon in the menu bar.
+
+## Build from source
+
+Needs macOS 15+ and Xcode or the Command Line Tools (`xcode-select --install`).
 
 ```sh
 git clone https://github.com/elad12390/AppVolume.git
 cd AppVolume
-scripts/build-app.sh --open
+scripts/build-app.sh --open      # builds build/AppVolume.app and launches it
+scripts/make-dmg.sh              # packages build/AppVolume-<version>.dmg
 ```
 
-This builds `build/AppVolume.app` and launches it. Look for the mixer icon in the menu bar. Copy the app to `/Applications` to keep it.
-
-### DMG
-
-```sh
-scripts/make-dmg.sh
-```
-
-Writes `build/AppVolume-<version>.dmg`. By default it is ad-hoc signed, which runs on the Mac that built it; on other Macs, open it the first time with right-click › **Open**. With a Developer ID certificate you can sign and notarize instead:
+`UNIVERSAL=1` builds for Apple Silicon and Intel (needs full Xcode). With a Developer ID certificate, `make-dmg.sh` can also sign and notarize:
 
 ```sh
 SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
 NOTARY_PROFILE=notary scripts/make-dmg.sh   # profile from: xcrun notarytool store-credentials notary
 ```
 
+### Releases
+
+CI builds every push and pull request. Pushing a tag like `v1.2.0` builds a universal DMG on GitHub Actions and publishes it as a release.
+
 ## Permission
 
 The first time you change an app's volume, macOS asks to let AppVolume record system audio. This is what lets it tap an app's output; nothing is recorded or saved. If you declined, or an app goes silent when you move its slider, enable AppVolume under **System Settings › Privacy & Security › Screen & System Audio Recording › System Audio Recording Only**.
 
-Ad-hoc signed builds get a new signature on every rebuild, so macOS may ask again after you rebuild.
+If you build it yourself, every rebuild gets a new ad-hoc signature, so macOS may ask again.
 
 ## Tips
 
@@ -95,6 +105,7 @@ Sources/AppVolume/
 scripts/
   build-app.sh            build and bundle the .app
   make-dmg.sh             package a signed DMG
+.github/workflows/        CI build, tag-triggered release
   make-demo.sh            render docs/demo.gif and screenshots (needs ffmpeg)
 ```
 
