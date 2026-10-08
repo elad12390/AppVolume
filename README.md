@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/icon.png" alt="AppVolume icon" width="128"></p>
+
 # AppVolume
 
 [![CI](https://github.com/elad12390/AppVolume/actions/workflows/ci.yml/badge.svg)](https://github.com/elad12390/AppVolume/actions/workflows/ci.yml)
@@ -107,6 +109,7 @@ scripts/
   make-dmg.sh             package a signed DMG
 .github/workflows/        CI build, tag-triggered release
   make-demo.sh            render docs/demo.gif and screenshots (needs ffmpeg)
+  make-icon.sh            render Resources/AppIcon.icns from code (scripts/icon/main.swift)
 ```
 
 The demo and screenshots are rendered from the real SwiftUI views with sample data (`scripts/make-demo.sh`), so they stay in sync with the UI.
